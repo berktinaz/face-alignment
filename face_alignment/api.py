@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import csv
 import glob
 import dlib
 import torch
@@ -171,7 +172,7 @@ class FaceAlignment:
         """
         return self.face_detector(image, 0)
 
-    def get_landmarks(self, input_image, all_faces=False, detected_faces=None):
+    def get_landmarks(self, input_image, all_faces=False, detected_faces=None, cropped_img=False, output_csv=False, output_csv_name='default.csv'):
         with torch.no_grad():
             if isinstance(input_image, str):
                 try:
@@ -181,8 +182,13 @@ class FaceAlignment:
                     return None
             else:
                 image = input_image
-            if detected_faces == None:
+
+            if cropped_img:
+                detected_faces = dlib.drectangle(0, 0, image.shape[1], image.shape[0])
+
+            elif detected_faces is None:
                 detected_faces = self.detect_faces(image)
+
             if len(detected_faces) > 0:
                 landmarks = []
                 for i, d in enumerate(detected_faces):
@@ -190,7 +196,7 @@ class FaceAlignment:
                         break
                     if self.use_cnn_face_detector:
                         d = d.rect
-
+                        
                     center = torch.FloatTensor(
                         [d.right() - (d.right() - d.left()) / 2.0, d.bottom() -
                          (d.bottom() - d.top()) / 2.0])
@@ -232,6 +238,17 @@ class FaceAlignment:
             else:
                 print("Warning: No faces were detected.")
                 return None
+
+            if output_csv:
+                with open(output_csv_name, 'w', newline='') as csvfile:
+                    newcsv = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+
+                    temp_row = []
+                    for i in range(landmarks.shape[0]):
+                        temp_row.append(int(landmarks[i, 1])) # y axis first as a convention
+                        temp_row.append(int(landmarks[i, 0]))
+
+                    newcsv.writerow(temp_row)
 
             return landmarks
 
