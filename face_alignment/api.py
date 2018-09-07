@@ -184,7 +184,7 @@ class FaceAlignment:
                 image = input_image
 
             if cropped_img:
-                detected_faces = dlib.drectangle(0, 0, image.shape[1], image.shape[0])
+                detected_faces = [dlib.drectangle(0, 0, image.shape[1], image.shape[0])]
 
             elif detected_faces is None:
                 detected_faces = self.detect_faces(image)
@@ -196,7 +196,7 @@ class FaceAlignment:
                         break
                     if self.use_cnn_face_detector:
                         d = d.rect
-                        
+
                     center = torch.FloatTensor(
                         [d.right() - (d.right() - d.left()) / 2.0, d.bottom() -
                          (d.bottom() - d.top()) / 2.0])
